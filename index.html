@@ -39,11 +39,19 @@
     .bool { color: #fbbf24; }
     .num { color: #f0abfc; }
     .null { color: #fb7185; }
+    h2 {
+      font-size: 14px;
+      font-weight: 400;
+      color: #555;
+      margin-bottom: 24px;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
   <h1>Detected Browser</h1>
   <div class="browser-name" id="browserName">Detecting...</div>
+  <h2 id="fingerprint"></h2>
   <pre id="json"></pre>
   <script>
     function detect() {
@@ -246,9 +254,34 @@
       return info;
     }
 
+    async function generateFingerprint(info) {
+      const parts = [
+        info.browser.name,
+        info.browser.engine,
+        info.os.name,
+        info.os.version,
+        info.locale.language,
+        info.locale.timezone,
+        info.hardware.cores,
+        info.hardware.memory,
+        info.hardware.platform,
+        info.screen.width + 'x' + info.screen.height,
+        info.screen.colorDepth,
+        info.screen.pixelRatio,
+        info.gpu ? info.gpu.renderer : '',
+      ].join('|');
+      const data = new TextEncoder().encode(parts);
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     function render(info) {
       const name = info.browser.name + (info.browser.version ? ' ' + info.browser.version : '');
       document.getElementById('browserName').textContent = name;
+
+      generateFingerprint(info).then(fp => {
+        document.getElementById('fingerprint').textContent = fp;
+      });
 
       const json = JSON.stringify(info, null, 2);
       const highlighted = json
