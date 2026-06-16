@@ -84,6 +84,7 @@
       margin-left: 8px;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/inapp-spy@latest/dist/index.global.min.js"></script>
 </head>
 <body>
   <h1>Detected Browser</h1>
@@ -99,95 +100,69 @@
     function detect() {
       const ua = navigator.userAgent;
 
+      // --- In-App detection via inapp-spy ---
+      const spy = InAppSpy();
+
       // --- Browser ---
       const browser = { name: 'Unknown', version: '', engine: '' };
-      const browsers = [
-        // In-app browsers (check first — they embed Chrome/Safari in UA)
-        ['LINE',           /\bLine\/(\d+[\d.]*)/i],
-        ['Facebook',       /\bFB[\w]*\/(\d+[\d.]*)|FBAN|FBAV/i],
-        ['Instagram',      /\bInstagram[\s/](\d+[\d.]*)/i],
-        ['Twitter',        /\bTwitter[\s/](\d+[\d.]*)/i],
-        ['TikTok',         /\bBytedance|ByteLocale|musical_ly|TikTok[\s/](\d+[\d.]*)/i],
-        ['Telegram',       /\bTelegramBot|Telegram[\s/](\d+[\d.]*)/i],
-        ['WeChat',         /\bMicroMessenger\/(\d+[\d.]*)/i],
-        ['KakaoTalk',      /\bKAKAOTALK[\s/](\d+[\d.]*)/i],
-        ['Snapchat',       /\bSnapchat[\s/](\d+[\d.]*)/i],
-        ['Discord',        /\bDiscord[\s/](\d+[\d.]*)/i],
-        ['Slack',          /\bSlack[\s/](\d+[\d.]*)/i],
-        ['Pinterest',      /\bPinterest[\s/](\d+[\d.]*)/i],
-        ['LinkedIn',       /\bLinkedIn[\s/](\d+[\d.]*)/i],
-        ['WhatsApp',       /\bWhatsApp\/(\d+[\d.]*)/i],
-        ['Zalo',           /\bZalo[\s/](\d+[\d.]*)/i],
-        ['Viber',          /\bViber\/(\d+[\d.]*)/i],
-        ['Naver',          /\bNAVER[\s/(](\d+[\d.]*)/i],
-        ['Daum',           /\bDaumApps\/(\d+[\d.]*)/i],
-        ['Reddit',         /\breddit[\s/](\d+[\d.]*)/i],
-        ['Threads',        /\bBarcelona[\s/](\d+[\d.]*)/i],
-        ['Messenger',      /\bMessenger[\s/](\d+[\d.]*)/i],
-        ['Google App',     /\bGSA\/(\d+[\d.]*)/],
-        ['Google News',    /\bGoogleNews[\s/](\d+[\d.]*)/i],
-        ['YouTube',        /\bcom\.google\.android\.youtube|YTApp[\s/](\d+[\d.]*)/i],
-        ['Shopee',         /\bShopee[\s/](\d+[\d.]*)/i],
-        ['Lazada',         /\bLazada[\s/](\d+[\d.]*)/i],
-        ['Grab',           /\bGrab[\s/](\d+[\d.]*)/i],
-        ['PayPay',         /\bPayPay[\s/](\d+[\d.]*)/i],
-        ['Alipay',         /\bAlipayClient\/(\d+[\d.]*)/i],
-        ['QQ',             /\bQQ\/(\d+[\d.]*)/i],
-        ['Weibo',          /\bWeibo.*__(\d+[\d.]*)/i],
-        ['Douyin',         /\bAweme[\s/](\d+[\d.]*)/i],
-        ['Baidu',          /\bbaiduboxapp\/(\d+[\d.]*)|bdbrowser/i],
-        // Standalone browsers
-        ['Opera GX',      /OPR\/(\d+[\d.]*).*GX/],
-        ['Opera',          /OPR\/(\d+[\d.]*)/],
-        ['Opera Touch',    /OPT\/(\d+[\d.]*)/],
-        ['Edge',           /Edg\/(\d+[\d.]*)/],
-        ['Samsung',        /SamsungBrowser\/(\d+[\d.]*)/],
-        ['Vivaldi',        /Vivaldi\/(\d+[\d.]*)/],
-        ['Brave',          /Brave\/(\d+[\d.]*)/],
-        ['Arc',            /Arc\/(\d+[\d.]*)/],
-        ['Whale',          /Whale\/(\d+[\d.]*)/],
-        ['Yandex',         /YaBrowser\/(\d+[\d.]*)/],
-        ['UC Browser',     /UCBrowser\/(\d+[\d.]*)/],
-        ['Puffin',         /Puffin\/(\d+[\d.]*)/],
-        ['Dolphin',        /Dolphin\/(\d+[\d.]*)/],
-        ['Maxthon',        /Maxthon\/(\d+[\d.]*)/],
-        ['Waterfox',       /Waterfox\/(\d+[\d.]*)/],
-        ['Pale Moon',      /PaleMoon\/(\d+[\d.]*)/],
-        ['Basilisk',       /Basilisk\/(\d+[\d.]*)/],
-        ['Tor',            /Tor[\s/]|Gecko.*Firefox.*rv:/i],
-        ['DuckDuckGo',     /DuckDuckGo\/(\d+[\d.]*)/],
-        ['Huawei Browser', /HuaweiBrowser\/(\d+[\d.]*)/],
-        ['Mi Browser',     /MiuiBrowser\/(\d+[\d.]*)/],
-        ['Silk',           /Silk\/(\d+[\d.]*)/],
-        ['Ecosia',         /Ecosia[\s/](\d+[\d.]*)/i],
-        ['Kiwi',           /Kiwi[\s/](\d+[\d.]*)/i],
-        ['Bromite',        /Bromite[\s/](\d+[\d.]*)/i],
-        ['Sleipnir',       /Sleipnir\/(\d+[\d.]*)/],
-        ['Lunascape',      /Lunascape\/(\d+[\d.]*)/],
-        ['Avant',          /Avant[\s/](\d+[\d.]*)/i],
-        ['Epiphany',       /Epiphany\/(\d+[\d.]*)/],
-        ['Konqueror',      /Konqueror\/(\d+[\d.]*)/],
-        ['Falkon',         /Falkon\/(\d+[\d.]*)/],
-        ['Midori',         /Midori\/(\d+[\d.]*)/],
-        ['Lynx',           /Lynx\/(\d+[\d.]*)/],
-        ['Googlebot',      /Googlebot\/(\d+[\d.]*)/],
-        ['Bingbot',        /bingbot\/(\d+[\d.]*)/],
-        ['WebView',        /; wv\)/],
-        ['Firefox',        /Firefox\/(\d+[\d.]*)/],
-        ['Safari',         /Version\/(\d+[\d.]*).*Safari/],
-        ['Chrome',         /Chrome\/(\d+[\d.]*)/],
-      ];
-      for (const [name, re] of browsers) {
-        const m = ua.match(re);
-        if (m) { browser.name = name; browser.version = m[1] || ''; break; }
+
+      // Use inapp-spy result first
+      if (spy.isInApp && spy.appName) {
+        browser.name = spy.appName;
+      } else {
+        const browsers = [
+          // Standalone browsers
+          ['Opera GX',      /OPR\/(\d+[\d.]*).*GX/],
+          ['Opera',          /OPR\/(\d+[\d.]*)/],
+          ['Opera Touch',    /OPT\/(\d+[\d.]*)/],
+          ['Edge',           /Edg\/(\d+[\d.]*)/],
+          ['Samsung',        /SamsungBrowser\/(\d+[\d.]*)/],
+          ['Vivaldi',        /Vivaldi\/(\d+[\d.]*)/],
+          ['Brave',          /Brave\/(\d+[\d.]*)/],
+          ['Arc',            /Arc\/(\d+[\d.]*)/],
+          ['Whale',          /Whale\/(\d+[\d.]*)/],
+          ['Yandex',         /YaBrowser\/(\d+[\d.]*)/],
+          ['UC Browser',     /UCBrowser\/(\d+[\d.]*)/],
+          ['Puffin',         /Puffin\/(\d+[\d.]*)/],
+          ['Dolphin',        /Dolphin\/(\d+[\d.]*)/],
+          ['Maxthon',        /Maxthon\/(\d+[\d.]*)/],
+          ['Waterfox',       /Waterfox\/(\d+[\d.]*)/],
+          ['Pale Moon',      /PaleMoon\/(\d+[\d.]*)/],
+          ['Basilisk',       /Basilisk\/(\d+[\d.]*)/],
+          ['Tor',            /Tor[\s/]|Gecko.*Firefox.*rv:/i],
+          ['DuckDuckGo',     /DuckDuckGo\/(\d+[\d.]*)/],
+          ['Huawei Browser', /HuaweiBrowser\/(\d+[\d.]*)/],
+          ['Mi Browser',     /MiuiBrowser\/(\d+[\d.]*)/],
+          ['Silk',           /Silk\/(\d+[\d.]*)/],
+          ['Ecosia',         /Ecosia[\s/](\d+[\d.]*)/i],
+          ['Kiwi',           /Kiwi[\s/](\d+[\d.]*)/i],
+          ['Bromite',        /Bromite[\s/](\d+[\d.]*)/i],
+          ['Sleipnir',       /Sleipnir\/(\d+[\d.]*)/],
+          ['Lunascape',      /Lunascape\/(\d+[\d.]*)/],
+          ['Avant',          /Avant[\s/](\d+[\d.]*)/i],
+          ['Epiphany',       /Epiphany\/(\d+[\d.]*)/],
+          ['Konqueror',      /Konqueror\/(\d+[\d.]*)/],
+          ['Falkon',         /Falkon\/(\d+[\d.]*)/],
+          ['Midori',         /Midori\/(\d+[\d.]*)/],
+          ['Lynx',           /Lynx\/(\d+[\d.]*)/],
+          ['Googlebot',      /Googlebot\/(\d+[\d.]*)/],
+          ['Bingbot',        /bingbot\/(\d+[\d.]*)/],
+          ['WebView',        /; wv\)/],
+          ['Firefox',        /Firefox\/(\d+[\d.]*)/],
+          ['Safari',         /Version\/(\d+[\d.]*).*Safari/],
+          ['Chrome',         /Chrome\/(\d+[\d.]*)/],
+        ];
+        for (const [name, re] of browsers) {
+          const m = ua.match(re);
+          if (m) { browser.name = name; browser.version = m[1] || ''; break; }
+        }
       }
 
-      // JS object fallbacks for apps that don't set UA strings
-      if (browser.name === 'Chrome' || browser.name === 'Safari' || browser.name === 'Unknown') {
-        if (window.Telegram || window.TelegramWebviewProxy) browser.name = 'Telegram';
-        else if (window.FB || window.FBAV || document.referrer.includes('facebook.com')) browser.name = 'Facebook';
-        else if (window.__igApiUrl || document.referrer.includes('instagram.com')) browser.name = 'Instagram';
-        else if (navigator.standalone === undefined && window.webkit && window.webkit.messageHandlers && /iPhone|iPad/.test(ua) && !(/Safari/.test(ua))) browser.name = 'WebView';
+      // Brave async check
+      if (browser.name === 'Chrome' && navigator.brave && typeof navigator.brave.isBrave === 'function') {
+        navigator.brave.isBrave().then(isBrave => {
+          if (isBrave) { info.browser.name = 'Brave'; render(info); }
+        });
       }
 
       if (/Gecko\//.test(ua)) browser.engine = 'Gecko';
@@ -348,14 +323,12 @@
         }).catch(() => {});
       }
 
-      // --- Brave (async) ---
-      if (browser.name === 'Chrome' && navigator.brave && typeof navigator.brave.isBrave === 'function') {
-        navigator.brave.isBrave().then(isBrave => {
-          if (isBrave) { info.browser.name = 'Brave'; render(info); }
-        });
-      }
-
       const info = {
+        inAppSpy: {
+          isInApp: spy.isInApp,
+          appKey: spy.appKey || null,
+          appName: spy.appName || null
+        },
         browser,
         os,
         screen,
@@ -372,17 +345,7 @@
       return info;
     }
 
-    const IN_APP_BROWSERS = [
-      'LINE', 'Facebook', 'Instagram', 'Twitter', 'TikTok', 'Telegram',
-      'WeChat', 'KakaoTalk', 'Snapchat', 'Discord', 'Slack', 'Pinterest',
-      'LinkedIn', 'WhatsApp', 'Zalo', 'Viber', 'Naver', 'Daum', 'Reddit',
-      'Threads', 'Messenger', 'Google App', 'Google News', 'YouTube',
-      'Shopee', 'Lazada', 'Grab', 'PayPay', 'Alipay', 'QQ', 'Weibo',
-      'Douyin', 'Baidu', 'WebView'
-    ];
-
     function openInBrowser(url) {
-      // Try intent:// for Android (opens default browser)
       const android = /Android/i.test(navigator.userAgent);
       const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
@@ -392,7 +355,6 @@
         return;
       }
 
-      // iOS: try x-safari:// or window.open
       if (ios) {
         window.location.href = 'x-safari-https://' + url.replace(/^https?:\/\//, '');
         setTimeout(function() {
@@ -405,29 +367,33 @@
     }
 
     function render(info) {
-      const name = info.browser.name + (info.browser.version ? ' ' + info.browser.version : '');
+      const name = info.inAppSpy.isInApp
+        ? (info.inAppSpy.appName || 'In-App Browser')
+        : info.browser.name + (info.browser.version ? ' ' + info.browser.version : '');
       document.getElementById('browserName').textContent = name;
-      document.getElementById('fingerprint').textContent = info.browser.name;
+      document.getElementById('fingerprint').textContent = info.inAppSpy.isInApp
+        ? (info.inAppSpy.appKey || 'in-app')
+        : info.browser.name;
 
       // Show warning if in-app browser
-      const isInApp = IN_APP_BROWSERS.includes(info.browser.name);
-      if (isInApp) {
+      if (info.inAppSpy.isInApp) {
+        const label = info.inAppSpy.appName || 'this app';
         document.getElementById('inappWarning').classList.add('show');
-        document.getElementById('appName').textContent = info.browser.name;
+        document.getElementById('appName').textContent = label;
 
-        document.getElementById('openBrowserBtn').addEventListener('click', function(e) {
+        document.getElementById('openBrowserBtn').onclick = function(e) {
           e.preventDefault();
           openInBrowser(window.location.href);
-        });
+        };
 
-        document.getElementById('copyUrlBtn').addEventListener('click', function() {
+        document.getElementById('copyUrlBtn').onclick = function() {
           navigator.clipboard.writeText(window.location.href).then(function() {
             document.getElementById('copyUrlBtn').textContent = 'Copied!';
             setTimeout(function() {
               document.getElementById('copyUrlBtn').textContent = 'Copy URL';
             }, 2000);
           });
-        });
+        };
       }
 
       const json = JSON.stringify(info, null, 2);
