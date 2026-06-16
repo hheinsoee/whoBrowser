@@ -181,6 +181,15 @@
         const m = ua.match(re);
         if (m) { browser.name = name; browser.version = m[1] || ''; break; }
       }
+
+      // JS object fallbacks for apps that don't set UA strings
+      if (browser.name === 'Chrome' || browser.name === 'Safari' || browser.name === 'Unknown') {
+        if (window.Telegram || window.TelegramWebviewProxy) browser.name = 'Telegram';
+        else if (window.FB || window.FBAV || document.referrer.includes('facebook.com')) browser.name = 'Facebook';
+        else if (window.__igApiUrl || document.referrer.includes('instagram.com')) browser.name = 'Instagram';
+        else if (navigator.standalone === undefined && window.webkit && window.webkit.messageHandlers && /iPhone|iPad/.test(ua) && !(/Safari/.test(ua))) browser.name = 'WebView';
+      }
+
       if (/Gecko\//.test(ua)) browser.engine = 'Gecko';
       else if (/AppleWebKit\//.test(ua)) browser.engine = 'WebKit';
       else if (/Trident\//.test(ua)) browser.engine = 'Trident';
