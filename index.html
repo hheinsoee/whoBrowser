@@ -3,420 +3,228 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Browser Detect</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: monospace;
-      background: #000;
-      color: #ccc;
-      padding: 24px;
-    }
-    h1 {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      color: #666;
-      margin-bottom: 8px;
-    }
-    .browser-name {
-      font-size: 32px;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 24px;
-    }
-    pre {
-      background: #111;
-      padding: 16px;
-      overflow-x: auto;
-      font-size: 12px;
-      line-height: 1.5;
-      color: #888;
-      border: 1px solid #222;
-    }
-    .key { color: #7dd3fc; }
-    .string { color: #86efac; }
-    .bool { color: #fbbf24; }
-    .num { color: #f0abfc; }
-    .null { color: #fb7185; }
-    h2 {
-      font-size: 20px;
-      font-weight: 400;
-      color: #7dd3fc;
-      margin-bottom: 24px;
-    }
-    .inapp-warning {
-      display: none;
-      background: #1a1a00;
-      border: 1px solid #fbbf24;
-      padding: 16px;
-      margin-bottom: 24px;
-    }
-    .inapp-warning.show { display: block; }
-    .inapp-warning p {
-      color: #fbbf24;
-      font-size: 13px;
-      margin-bottom: 12px;
-    }
-    .inapp-warning .app-name { color: #fff; font-weight: 700; }
-    .open-browser-btn {
-      display: inline-block;
-      background: #fff;
-      color: #000;
-      font-family: monospace;
-      font-size: 14px;
-      font-weight: 700;
-      padding: 12px 24px;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-    }
-    .open-browser-btn:active { background: #ccc; }
-    .copy-url-btn {
-      display: inline-block;
-      background: none;
-      color: #888;
-      font-family: monospace;
-      font-size: 13px;
-      padding: 12px 16px;
-      border: 1px solid #333;
-      cursor: pointer;
-      margin-left: 8px;
-    }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/inapp-spy@latest/dist/index.global.min.js"></script>
+  <title>Browser Detect — Native</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <nav>
+    <a href="index.html" class="active">Native</a>
+    <a href="spy.html">inapp-spy</a>
+  </nav>
   <h1>Detected Browser</h1>
   <div class="browser-name" id="browserName">Detecting...</div>
   <h2 id="fingerprint"></h2>
   <div class="inapp-warning" id="inappWarning">
     <p>You are in <span class="app-name" id="appName"></span>'s in-app browser. Google Sign-In may not work here.</p>
     <a class="open-browser-btn" id="openBrowserBtn">Open in Browser</a>
-    <button class="copy-url-btn" id="copyUrlBtn">Copy URL</button>
+    <button class="copy-btn" id="copyUrlBtn" style="margin-left: 8px;">Copy URL</button>
   </div>
-  <button class="copy-url-btn" id="copyJsonBtn" style="margin-bottom: 12px;">Copy JSON</button>
+  <div class="bar">
+    <span>UA + JS detection (no dependencies)</span>
+    <button class="copy-btn" id="copyJsonBtn">Copy JSON</button>
+  </div>
   <pre id="json"></pre>
+
+  <script src="shared.js"></script>
   <script>
-    function detect() {
-      const ua = navigator.userAgent;
+    var ua = navigator.userAgent;
+    var browser = { name: "Unknown", version: "", engine: "" };
+    var browsers = [
+      ["LINE",           /\bLine\/(\d+[\d.]*)/i],
+      ["Facebook",       /\bFB[\w]*\/(\d+[\d.]*)|FBAN|FBAV/i],
+      ["Instagram",      /\bInstagram[\s/](\d+[\d.]*)/i],
+      ["Twitter",        /\bTwitter[\s/](\d+[\d.]*)/i],
+      ["TikTok",         /\bBytedance|ByteLocale|musical_ly|TikTok[\s/](\d+[\d.]*)/i],
+      ["Telegram",       /\bTelegramBot|Telegram[\s/](\d+[\d.]*)/i],
+      ["WeChat",         /\bMicroMessenger\/(\d+[\d.]*)/i],
+      ["KakaoTalk",      /\bKAKAOTALK[\s/](\d+[\d.]*)/i],
+      ["Snapchat",       /\bSnapchat[\s/](\d+[\d.]*)/i],
+      ["Discord",        /\bDiscord[\s/](\d+[\d.]*)/i],
+      ["Slack",          /\bSlack[\s/](\d+[\d.]*)/i],
+      ["Pinterest",      /\bPinterest[\s/](\d+[\d.]*)/i],
+      ["LinkedIn",       /\bLinkedIn[\s/](\d+[\d.]*)/i],
+      ["WhatsApp",       /\bWhatsApp\/(\d+[\d.]*)/i],
+      ["Zalo",           /\bZalo[\s/](\d+[\d.]*)/i],
+      ["Viber",          /\bViber\/(\d+[\d.]*)/i],
+      ["Naver",          /\bNAVER[\s/(](\d+[\d.]*)/i],
+      ["Daum",           /\bDaumApps\/(\d+[\d.]*)/i],
+      ["Reddit",         /\breddit[\s/](\d+[\d.]*)/i],
+      ["Threads",        /\bBarcelona[\s/](\d+[\d.]*)/i],
+      ["Messenger",      /\bMessenger[\s/](\d+[\d.]*)/i],
+      ["Google App",     /\bGSA\/(\d+[\d.]*)/],
+      ["Google News",    /\bGoogleNews[\s/](\d+[\d.]*)/i],
+      ["YouTube",        /\bcom\.google\.android\.youtube|YTApp[\s/](\d+[\d.]*)/i],
+      ["Shopee",         /\bShopee[\s/](\d+[\d.]*)/i],
+      ["Lazada",         /\bLazada[\s/](\d+[\d.]*)/i],
+      ["Grab",           /\bGrab[\s/](\d+[\d.]*)/i],
+      ["PayPay",         /\bPayPay[\s/](\d+[\d.]*)/i],
+      ["Alipay",         /\bAlipayClient\/(\d+[\d.]*)/i],
+      ["QQ",             /\bQQ\/(\d+[\d.]*)/i],
+      ["Weibo",          /\bWeibo.*__(\d+[\d.]*)/i],
+      ["Douyin",         /\bAweme[\s/](\d+[\d.]*)/i],
+      ["Baidu",          /\bbaiduboxapp\/(\d+[\d.]*)|bdbrowser/i],
+      ["Opera GX",      /OPR\/(\d+[\d.]*).*GX/],
+      ["Opera",          /OPR\/(\d+[\d.]*)/],
+      ["Opera Touch",    /OPT\/(\d+[\d.]*)/],
+      ["Edge",           /Edg\/(\d+[\d.]*)/],
+      ["Samsung",        /SamsungBrowser\/(\d+[\d.]*)/],
+      ["Vivaldi",        /Vivaldi\/(\d+[\d.]*)/],
+      ["Brave",          /Brave\/(\d+[\d.]*)/],
+      ["Arc",            /Arc\/(\d+[\d.]*)/],
+      ["Whale",          /Whale\/(\d+[\d.]*)/],
+      ["Yandex",         /YaBrowser\/(\d+[\d.]*)/],
+      ["UC Browser",     /UCBrowser\/(\d+[\d.]*)/],
+      ["Puffin",         /Puffin\/(\d+[\d.]*)/],
+      ["Dolphin",        /Dolphin\/(\d+[\d.]*)/],
+      ["Maxthon",        /Maxthon\/(\d+[\d.]*)/],
+      ["Waterfox",       /Waterfox\/(\d+[\d.]*)/],
+      ["Pale Moon",      /PaleMoon\/(\d+[\d.]*)/],
+      ["Basilisk",       /Basilisk\/(\d+[\d.]*)/],
+      ["Tor",            /Tor[\s/]|Gecko.*Firefox.*rv:/i],
+      ["DuckDuckGo",     /DuckDuckGo\/(\d+[\d.]*)/],
+      ["Huawei Browser", /HuaweiBrowser\/(\d+[\d.]*)/],
+      ["Mi Browser",     /MiuiBrowser\/(\d+[\d.]*)/],
+      ["Silk",           /Silk\/(\d+[\d.]*)/],
+      ["Ecosia",         /Ecosia[\s/](\d+[\d.]*)/i],
+      ["Kiwi",           /Kiwi[\s/](\d+[\d.]*)/i],
+      ["Bromite",        /Bromite[\s/](\d+[\d.]*)/i],
+      ["Sleipnir",       /Sleipnir\/(\d+[\d.]*)/],
+      ["Lunascape",      /Lunascape\/(\d+[\d.]*)/],
+      ["Avant",          /Avant[\s/](\d+[\d.]*)/i],
+      ["Epiphany",       /Epiphany\/(\d+[\d.]*)/],
+      ["Konqueror",      /Konqueror\/(\d+[\d.]*)/],
+      ["Falkon",         /Falkon\/(\d+[\d.]*)/],
+      ["Midori",         /Midori\/(\d+[\d.]*)/],
+      ["Lynx",           /Lynx\/(\d+[\d.]*)/],
+      ["Googlebot",      /Googlebot\/(\d+[\d.]*)/],
+      ["Bingbot",        /bingbot\/(\d+[\d.]*)/],
+      ["WebView",        /; wv\)/],
+      ["Firefox",        /Firefox\/(\d+[\d.]*)/],
+      ["Safari",         /Version\/(\d+[\d.]*).*Safari/],
+      ["Chrome",         /Chrome\/(\d+[\d.]*)/],
+    ];
+    for (var i = 0; i < browsers.length; i++) {
+      var m = ua.match(browsers[i][1]);
+      if (m) { browser.name = browsers[i][0]; browser.version = m[1] || ""; break; }
+    }
 
-      // --- In-App detection via inapp-spy ---
-      const spy = InAppSpy();
+    // JS object fallbacks
+    if (browser.name === "Chrome" || browser.name === "Safari" || browser.name === "Unknown") {
+      if (window.Telegram || window.TelegramWebviewProxy) browser.name = "Telegram";
+      else if (window.FB || window.FBAV || document.referrer.includes("facebook.com")) browser.name = "Facebook";
+      else if (window.__igApiUrl || document.referrer.includes("instagram.com")) browser.name = "Instagram";
+    }
 
-      // --- Browser ---
-      const browser = { name: 'Unknown', version: '', engine: '' };
+    if (/Gecko\//.test(ua)) browser.engine = "Gecko";
+    else if (/AppleWebKit\//.test(ua)) browser.engine = "WebKit";
+    else if (/Trident\//.test(ua)) browser.engine = "Trident";
 
-      // Use inapp-spy result first
-      if (spy.isInApp && spy.appName) {
-        browser.name = spy.appName;
-      } else {
-        const browsers = [
-          // Standalone browsers
-          ['Opera GX',      /OPR\/(\d+[\d.]*).*GX/],
-          ['Opera',          /OPR\/(\d+[\d.]*)/],
-          ['Opera Touch',    /OPT\/(\d+[\d.]*)/],
-          ['Edge',           /Edg\/(\d+[\d.]*)/],
-          ['Samsung',        /SamsungBrowser\/(\d+[\d.]*)/],
-          ['Vivaldi',        /Vivaldi\/(\d+[\d.]*)/],
-          ['Brave',          /Brave\/(\d+[\d.]*)/],
-          ['Arc',            /Arc\/(\d+[\d.]*)/],
-          ['Whale',          /Whale\/(\d+[\d.]*)/],
-          ['Yandex',         /YaBrowser\/(\d+[\d.]*)/],
-          ['UC Browser',     /UCBrowser\/(\d+[\d.]*)/],
-          ['Puffin',         /Puffin\/(\d+[\d.]*)/],
-          ['Dolphin',        /Dolphin\/(\d+[\d.]*)/],
-          ['Maxthon',        /Maxthon\/(\d+[\d.]*)/],
-          ['Waterfox',       /Waterfox\/(\d+[\d.]*)/],
-          ['Pale Moon',      /PaleMoon\/(\d+[\d.]*)/],
-          ['Basilisk',       /Basilisk\/(\d+[\d.]*)/],
-          ['Tor',            /Tor[\s/]|Gecko.*Firefox.*rv:/i],
-          ['DuckDuckGo',     /DuckDuckGo\/(\d+[\d.]*)/],
-          ['Huawei Browser', /HuaweiBrowser\/(\d+[\d.]*)/],
-          ['Mi Browser',     /MiuiBrowser\/(\d+[\d.]*)/],
-          ['Silk',           /Silk\/(\d+[\d.]*)/],
-          ['Ecosia',         /Ecosia[\s/](\d+[\d.]*)/i],
-          ['Kiwi',           /Kiwi[\s/](\d+[\d.]*)/i],
-          ['Bromite',        /Bromite[\s/](\d+[\d.]*)/i],
-          ['Sleipnir',       /Sleipnir\/(\d+[\d.]*)/],
-          ['Lunascape',      /Lunascape\/(\d+[\d.]*)/],
-          ['Avant',          /Avant[\s/](\d+[\d.]*)/i],
-          ['Epiphany',       /Epiphany\/(\d+[\d.]*)/],
-          ['Konqueror',      /Konqueror\/(\d+[\d.]*)/],
-          ['Falkon',         /Falkon\/(\d+[\d.]*)/],
-          ['Midori',         /Midori\/(\d+[\d.]*)/],
-          ['Lynx',           /Lynx\/(\d+[\d.]*)/],
-          ['Googlebot',      /Googlebot\/(\d+[\d.]*)/],
-          ['Bingbot',        /bingbot\/(\d+[\d.]*)/],
-          ['WebView',        /; wv\)/],
-          ['Firefox',        /Firefox\/(\d+[\d.]*)/],
-          ['Safari',         /Version\/(\d+[\d.]*).*Safari/],
-          ['Chrome',         /Chrome\/(\d+[\d.]*)/],
-        ];
-        for (const [name, re] of browsers) {
-          const m = ua.match(re);
-          if (m) { browser.name = name; browser.version = m[1] || ''; break; }
-        }
+    var IN_APP = [
+      "LINE","Facebook","Instagram","Twitter","TikTok","Telegram",
+      "WeChat","KakaoTalk","Snapchat","Discord","Slack","Pinterest",
+      "LinkedIn","WhatsApp","Zalo","Viber","Naver","Daum","Reddit",
+      "Threads","Messenger","Google App","Google News","YouTube",
+      "Shopee","Lazada","Grab","PayPay","Alipay","QQ","Weibo",
+      "Douyin","Baidu","WebView"
+    ];
+
+    var os = { name: "Unknown", version: "" };
+    var osP = [
+      ["Windows", /Windows NT ([\d.]+)/], ["macOS", /Mac OS X ([\d_]+)/],
+      ["iOS", /iPhone OS ([\d_]+)/], ["iPadOS", /iPad.*OS ([\d_]+)/],
+      ["Android", /Android ([\d.]+)/], ["Chrome OS", /CrOS/], ["Linux", /Linux/],
+    ];
+    for (var i = 0; i < osP.length; i++) {
+      var m = ua.match(osP[i][1]);
+      if (m) { os.name = osP[i][0]; os.version = m[1] ? m[1].replace(/_/g, ".") : ""; break; }
+    }
+
+    var s = window.screen;
+    var now = new Date();
+    var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+
+    var gpu = null;
+    try {
+      var c = document.createElement("canvas");
+      var gl = c.getContext("webgl") || c.getContext("experimental-webgl");
+      if (gl) {
+        var dbg = gl.getExtension("WEBGL_debug_renderer_info");
+        gpu = {
+          vendor: dbg ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR),
+          renderer: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)
+        };
       }
+    } catch (e) {}
 
-      // Brave async check
-      if (browser.name === 'Chrome' && navigator.brave && typeof navigator.brave.isBrave === 'function') {
-        navigator.brave.isBrave().then(isBrave => {
-          if (isBrave) { info.browser.name = 'Brave'; render(info); }
-        });
-      }
-
-      if (/Gecko\//.test(ua)) browser.engine = 'Gecko';
-      else if (/AppleWebKit\//.test(ua)) browser.engine = 'WebKit';
-      else if (/Trident\//.test(ua)) browser.engine = 'Trident';
-
-      // --- OS ---
-      let os = { name: 'Unknown', version: '' };
-      const osPatterns = [
-        ['Windows', /Windows NT ([\d.]+)/],
-        ['macOS',   /Mac OS X ([\d_]+)/],
-        ['iOS',     /iPhone OS ([\d_]+)/],
-        ['iPadOS',  /iPad.*OS ([\d_]+)/],
-        ['Android', /Android ([\d.]+)/],
-        ['Chrome OS', /CrOS/],
-        ['Linux',   /Linux/],
-      ];
-      for (const [name, re] of osPatterns) {
-        const m = ua.match(re);
-        if (m) {
-          os.name = name;
-          os.version = m[1] ? m[1].replace(/_/g, '.') : '';
-          break;
-        }
-      }
-
-      // --- Screen ---
-      const s = window.screen;
-      const screen = {
-        width: s.width,
-        height: s.height,
-        availWidth: s.availWidth,
-        availHeight: s.availHeight,
-        colorDepth: s.colorDepth,
-        pixelRatio: window.devicePixelRatio || 1,
-        orientation: (s.orientation && s.orientation.type) || ''
-      };
-
-      // --- Window ---
-      const win = {
-        innerWidth: window.innerWidth,
-        innerHeight: window.innerHeight,
-        outerWidth: window.outerWidth,
-        outerHeight: window.outerHeight
-      };
-
-      // --- Locale & Timezone ---
-      const now = new Date();
-      const locale = {
-        language: navigator.language || '',
+    var info = {
+      browser: browser,
+      os: os,
+      screen: { width: s.width, height: s.height, availWidth: s.availWidth, availHeight: s.availHeight, colorDepth: s.colorDepth, pixelRatio: window.devicePixelRatio || 1, orientation: (s.orientation && s.orientation.type) || "" },
+      window: { innerWidth: window.innerWidth, innerHeight: window.innerHeight, outerWidth: window.outerWidth, outerHeight: window.outerHeight },
+      locale: {
+        language: navigator.language || "",
         languages: navigator.languages ? Array.from(navigator.languages) : [],
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
         timezoneOffset: now.getTimezoneOffset(),
-        dateFormat: new Intl.DateTimeFormat(navigator.language, { dateStyle: 'full' }).format(now),
+        dateFormat: new Intl.DateTimeFormat(navigator.language, { dateStyle: "full" }).format(now),
         numberFormat: new Intl.NumberFormat(navigator.language).format(1234567.89),
-        currency: (() => {
-          try {
-            return new Intl.NumberFormat(navigator.language, { style: 'currency', currency: 'USD' }).format(1234.5);
-          } catch { return ''; }
-        })()
-      };
-
-      // --- Hardware ---
-      const hardware = {
-        cores: navigator.hardwareConcurrency || null,
-        memory: navigator.deviceMemory || null,
-        maxTouchPoints: navigator.maxTouchPoints || 0,
-        platform: navigator.platform || '',
-        mobile: /Mobi|Android/i.test(ua)
-      };
-
-      // --- Network ---
-      const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-      const network = conn ? {
-        effectiveType: conn.effectiveType || '',
-        downlink: conn.downlink || null,
-        rtt: conn.rtt || null,
-        saveData: conn.saveData || false
-      } : null;
-
-      // --- Media ---
-      const media = {
-        cookiesEnabled: navigator.cookieEnabled,
-        doNotTrack: navigator.doNotTrack || null,
-        pdfViewerEnabled: navigator.pdfViewerEnabled || null,
-        webdriver: navigator.webdriver || false,
-        online: navigator.onLine
-      };
-
-      // --- Features ---
-      const features = {
-        serviceWorker: 'serviceWorker' in navigator,
-        webGL: (() => {
-          try {
-            const c = document.createElement('canvas');
-            return !!(c.getContext('webgl') || c.getContext('experimental-webgl'));
-          } catch { return false; }
-        })(),
-        webGL2: (() => {
-          try { return !!document.createElement('canvas').getContext('webgl2'); }
-          catch { return false; }
-        })(),
+        currency: (function () { try { return new Intl.NumberFormat(navigator.language, { style: "currency", currency: "USD" }).format(1234.5); } catch (e) { return ""; } })()
+      },
+      hardware: { cores: navigator.hardwareConcurrency || null, memory: navigator.deviceMemory || null, maxTouchPoints: navigator.maxTouchPoints || 0, platform: navigator.platform || "", mobile: /Mobi|Android/i.test(ua) },
+      network: conn ? { effectiveType: conn.effectiveType || "", downlink: conn.downlink || null, rtt: conn.rtt || null, saveData: conn.saveData || false } : null,
+      gpu: gpu,
+      media: { cookiesEnabled: navigator.cookieEnabled, doNotTrack: navigator.doNotTrack || null, pdfViewerEnabled: navigator.pdfViewerEnabled || null, webdriver: navigator.webdriver || false, online: navigator.onLine },
+      features: {
+        serviceWorker: "serviceWorker" in navigator,
+        webGL: (function () { try { return !!document.createElement("canvas").getContext("webgl"); } catch (e) { return false; } })(),
+        webGL2: (function () { try { return !!document.createElement("canvas").getContext("webgl2"); } catch (e) { return false; } })(),
         webRTC: !!(window.RTCPeerConnection || window.webkitRTCPeerConnection),
-        webSocket: 'WebSocket' in window,
-        webWorker: 'Worker' in window,
-        sharedWorker: 'SharedWorker' in window,
-        notifications: 'Notification' in window,
-        geolocation: 'geolocation' in navigator,
-        bluetooth: 'bluetooth' in navigator,
-        usb: 'usb' in navigator,
-        midi: 'requestMIDIAccess' in navigator,
-        clipboard: 'clipboard' in navigator,
-        share: 'share' in navigator,
-        vibrate: 'vibrate' in navigator,
-        speechSynthesis: 'speechSynthesis' in window,
-        speechRecognition: 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window,
-        indexedDB: 'indexedDB' in window,
-        localStorage: (() => { try { return !!window.localStorage; } catch { return false; } })(),
-        sessionStorage: (() => { try { return !!window.sessionStorage; } catch { return false; } })(),
-        intersectionObserver: 'IntersectionObserver' in window,
-        resizeObserver: 'ResizeObserver' in window,
-        mutationObserver: 'MutationObserver' in window,
-        performanceObserver: 'PerformanceObserver' in window,
-        webAnimations: 'animate' in document.createElement('div'),
-        customElements: 'customElements' in window,
-        shadowDOM: 'attachShadow' in document.createElement('div'),
-        webComponents: 'customElements' in window && 'attachShadow' in document.createElement('div'),
-        offscreenCanvas: 'OffscreenCanvas' in window,
-        webCodecs: 'VideoEncoder' in window,
-        webTransport: 'WebTransport' in window,
-        webGPU: 'gpu' in navigator
-      };
+        webSocket: "WebSocket" in window, webWorker: "Worker" in window,
+        notifications: "Notification" in window, geolocation: "geolocation" in navigator,
+        bluetooth: "bluetooth" in navigator, usb: "usb" in navigator,
+        clipboard: "clipboard" in navigator, share: "share" in navigator,
+        indexedDB: "indexedDB" in window, webGPU: "gpu" in navigator
+      },
+      userAgent: ua
+    };
 
-      // --- GPU ---
-      let gpu = null;
-      try {
-        const c = document.createElement('canvas');
-        const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
-        if (gl) {
-          const dbg = gl.getExtension('WEBGL_debug_renderer_info');
-          gpu = {
-            vendor: dbg ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR),
-            renderer: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)
-          };
+    // Render
+    var isInApp = IN_APP.indexOf(browser.name) !== -1;
+    document.getElementById("browserName").textContent = browser.name + (browser.version ? " " + browser.version : "");
+    document.getElementById("fingerprint").textContent = browser.name;
+    if (isInApp) showWarning(browser.name);
+
+    var json = JSON.stringify(info, null, 2);
+    document.getElementById("json").innerHTML = highlight(json);
+    copyBtn("copyJsonBtn", json);
+
+    // Brave async
+    if (browser.name === "Chrome" && navigator.brave && typeof navigator.brave.isBrave === "function") {
+      navigator.brave.isBrave().then(function (yes) {
+        if (yes) {
+          info.browser.name = "Brave";
+          document.getElementById("browserName").textContent = "Brave " + browser.version;
+          document.getElementById("fingerprint").textContent = "Brave";
+          var j = JSON.stringify(info, null, 2);
+          document.getElementById("json").innerHTML = highlight(j);
+          copyBtn("copyJsonBtn", j);
         }
-      } catch {}
-
-      // --- Battery (async) ---
-      if (navigator.getBattery) {
-        navigator.getBattery().then(b => {
-          info.battery = {
-            charging: b.charging,
-            level: Math.round(b.level * 100) + '%',
-            chargingTime: b.chargingTime === Infinity ? 'N/A' : b.chargingTime + 's',
-            dischargingTime: b.dischargingTime === Infinity ? 'N/A' : b.dischargingTime + 's'
-          };
-          render(info);
-        }).catch(() => {});
-      }
-
-      const info = {
-        inAppSpy: {
-          isInApp: spy.isInApp,
-          appKey: spy.appKey || null,
-          appName: spy.appName || null
-        },
-        browser,
-        os,
-        screen,
-        window: win,
-        locale,
-        hardware,
-        network,
-        gpu,
-        media,
-        features,
-        userAgent: ua
-      };
-
-      return info;
+      });
     }
 
-    function openInBrowser(url) {
-      const android = /Android/i.test(navigator.userAgent);
-      const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-      if (android) {
-        window.location.href = 'intent://' + url.replace(/^https?:\/\//, '') +
-          '#Intent;scheme=https;action=android.intent.action.VIEW;end';
-        return;
-      }
-
-      if (ios) {
-        window.location.href = 'x-safari-https://' + url.replace(/^https?:\/\//, '');
-        setTimeout(function() {
-          window.open(url, '_blank');
-        }, 500);
-        return;
-      }
-
-      window.open(url, '_blank');
-    }
-
-    function render(info) {
-      const name = info.inAppSpy.isInApp
-        ? (info.inAppSpy.appName || 'In-App Browser')
-        : info.browser.name + (info.browser.version ? ' ' + info.browser.version : '');
-      document.getElementById('browserName').textContent = name;
-      document.getElementById('fingerprint').textContent = info.inAppSpy.isInApp
-        ? (info.inAppSpy.appKey || 'in-app')
-        : info.browser.name;
-
-      // Show warning if in-app browser
-      if (info.inAppSpy.isInApp) {
-        const label = info.inAppSpy.appName || 'this app';
-        document.getElementById('inappWarning').classList.add('show');
-        document.getElementById('appName').textContent = label;
-
-        document.getElementById('openBrowserBtn').onclick = function(e) {
-          e.preventDefault();
-          openInBrowser(window.location.href);
+    // Battery async
+    if (navigator.getBattery) {
+      navigator.getBattery().then(function (b) {
+        info.battery = {
+          charging: b.charging, level: Math.round(b.level * 100) + "%",
+          chargingTime: b.chargingTime === Infinity ? "N/A" : b.chargingTime + "s",
+          dischargingTime: b.dischargingTime === Infinity ? "N/A" : b.dischargingTime + "s"
         };
-
-        document.getElementById('copyUrlBtn').onclick = function() {
-          navigator.clipboard.writeText(window.location.href).then(function() {
-            document.getElementById('copyUrlBtn').textContent = 'Copied!';
-            setTimeout(function() {
-              document.getElementById('copyUrlBtn').textContent = 'Copy URL';
-            }, 2000);
-          });
-        };
-      }
-
-      const json = JSON.stringify(info, null, 2);
-      const highlighted = json
-        .replace(/"([^"]+)":/g, '<span class="key">"$1"</span>:')
-        .replace(/: "((?:[^"\\]|\\.)*)"/g, ': <span class="string">"$1"</span>')
-        .replace(/: (true|false)/g, ': <span class="bool">$1</span>')
-        .replace(/: (null)/g, ': <span class="null">$1</span>')
-        .replace(/: (\d+\.?\d*)/g, ': <span class="num">$1</span>');
-      document.getElementById('json').innerHTML = highlighted;
-
-      document.getElementById('copyJsonBtn').onclick = function() {
-        navigator.clipboard.writeText(json).then(function() {
-          document.getElementById('copyJsonBtn').textContent = 'Copied!';
-          setTimeout(function() {
-            document.getElementById('copyJsonBtn').textContent = 'Copy JSON';
-          }, 2000);
-        });
-      };
+        var j = JSON.stringify(info, null, 2);
+        document.getElementById("json").innerHTML = highlight(j);
+        copyBtn("copyJsonBtn", j);
+      }).catch(function () {});
     }
-
-    render(detect());
   </script>
 </body>
 </html>

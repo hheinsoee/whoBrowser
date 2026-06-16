@@ -1,0 +1,103 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: monospace;
+  background: #000;
+  color: #ccc;
+  padding: 24px;
+}
+h1 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #666;
+  margin-bottom: 8px;
+}
+.browser-name {
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 24px;
+}
+h2 {
+  font-size: 20px;
+  font-weight: 400;
+  color: #7dd3fc;
+  margin-bottom: 24px;
+}
+pre {
+  background: #111;
+  padding: 16px;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #888;
+  border: 1px solid #222;
+}
+.key { color: #7dd3fc; }
+.string { color: #86efac; }
+.bool { color: #fbbf24; }
+.num { color: #f0abfc; }
+.null { color: #fb7185; }
+.inapp-warning {
+  display: none;
+  background: #1a1a00;
+  border: 1px solid #fbbf24;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+.inapp-warning.show { display: block; }
+.inapp-warning p {
+  color: #fbbf24;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.inapp-warning .app-name { color: #fff; font-weight: 700; }
+.open-browser-btn {
+  display: inline-block;
+  background: #fff;
+  color: #000;
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 12px 24px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+.open-browser-btn:active { background: #ccc; }
+.copy-btn {
+  display: inline-block;
+  background: none;
+  color: #888;
+  font-family: monospace;
+  font-size: 13px;
+  padding: 12px 16px;
+  border: 1px solid #333;
+  cursor: pointer;
+}
+nav {
+  margin-bottom: 24px;
+}
+nav a {
+  color: #666;
+  font-size: 13px;
+  text-decoration: none;
+  margin-right: 16px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid transparent;
+}
+nav a.active {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+nav a:hover { color: #aaa; }
+.bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.bar span {
+  color: #666;
+  font-size: 11px;
+}

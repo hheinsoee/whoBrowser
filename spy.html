@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browser Detect — inapp-spy</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/inapp-spy@latest/dist/index.global.min.js"></script>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Native</a>
+    <a href="spy.html" class="active">inapp-spy</a>
+  </nav>
+  <h1>Detected Browser</h1>
+  <div class="browser-name" id="browserName">Detecting...</div>
+  <h2 id="fingerprint"></h2>
+  <div class="inapp-warning" id="inappWarning">
+    <p>You are in <span class="app-name" id="appName"></span>'s in-app browser. Google Sign-In may not work here.</p>
+    <a class="open-browser-btn" id="openBrowserBtn">Open in Browser</a>
+    <button class="copy-btn" id="copyUrlBtn" style="margin-left: 8px;">Copy URL</button>
+  </div>
+  <div class="bar">
+    <span>inapp-spy package (CDN)</span>
+    <button class="copy-btn" id="copyJsonBtn">Copy JSON</button>
+  </div>
+  <pre id="json"></pre>
+
+  <script src="shared.js"></script>
+  <script>
+    if (typeof InAppSpy !== "function") {
+      document.getElementById("browserName").textContent = "Error";
+      document.getElementById("fingerprint").textContent = "";
+      document.getElementById("json").textContent = "inapp-spy failed to load.\nThis page requires an internet connection (CDN).";
+    } else {
+      var result = InAppSpy();
+
+      if (result.isInApp) {
+        document.getElementById("browserName").textContent = result.appName || "In-App Browser";
+        document.getElementById("fingerprint").textContent = result.appKey || "in-app";
+        showWarning(result.appName || "this app");
+      } else {
+        document.getElementById("browserName").textContent = "Not In-App";
+        document.getElementById("fingerprint").textContent = "standard browser";
+      }
+
+      var json = JSON.stringify(result, null, 2);
+      document.getElementById("json").innerHTML = highlight(json);
+      copyBtn("copyJsonBtn", json);
+    }
+  </script>
+</body>
+</html>
