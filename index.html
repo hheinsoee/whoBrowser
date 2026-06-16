@@ -20,7 +20,7 @@
       background: #1e293b;
       border-radius: 16px;
       padding: 40px;
-      max-width: 600px;
+      max-width: 700px;
       width: 100%;
       box-shadow: 0 20px 60px rgba(0,0,0,0.4);
     }
@@ -44,14 +44,18 @@
       border-radius: 10px;
       padding: 20px;
       overflow-x: auto;
-      font-size: 13px;
-      line-height: 1.6;
+      font-size: 12px;
+      line-height: 1.5;
       color: #94a3b8;
       border: 1px solid #334155;
+      max-height: 70vh;
+      overflow-y: auto;
     }
     .key { color: #7dd3fc; }
     .string { color: #86efac; }
     .bool { color: #fbbf24; }
+    .num { color: #f0abfc; }
+    .null { color: #fb7185; }
   </style>
 </head>
 <body>
@@ -63,87 +67,215 @@
   <script>
     function detect() {
       const ua = navigator.userAgent;
-      const info = {
-        browser: 'Unknown',
-        version: '',
-        engine: '',
-        os: '',
-        platform: navigator.platform || '',
-        mobile: /Mobi|Android/i.test(ua),
-        userAgent: ua
-      };
 
-      // Order matters — check more specific browsers first
+      // --- Browser ---
+      const browser = { name: 'Unknown', version: '', engine: '' };
       const browsers = [
         ['Opera',    /OPR\/(\d+[\d.]*)/],
         ['Edge',     /Edg\/(\d+[\d.]*)/],
         ['Samsung',  /SamsungBrowser\/(\d+[\d.]*)/],
-        ['Brave',    /Brave\/(\d+[\d.]*)|Chrome\/(\d+[\d.]*)/, () => navigator.brave && navigator.brave.isBrave],
         ['Vivaldi',  /Vivaldi\/(\d+[\d.]*)/],
         ['Firefox',  /Firefox\/(\d+[\d.]*)/],
         ['Safari',   /Version\/(\d+[\d.]*).*Safari/],
         ['Chrome',   /Chrome\/(\d+[\d.]*)/],
       ];
-
-      for (const [name, re, extra] of browsers) {
+      for (const [name, re] of browsers) {
         const m = ua.match(re);
-        if (m) {
-          if (name === 'Brave') {
-            if (extra && extra()) {
-              info.browser = 'Brave';
-              info.version = m[1] || m[2] || '';
-              break;
-            }
-            continue;
-          }
-          info.browser = name;
-          info.version = m[1] || '';
-          break;
-        }
+        if (m) { browser.name = name; browser.version = m[1] || ''; break; }
       }
+      if (/Gecko\//.test(ua)) browser.engine = 'Gecko';
+      else if (/AppleWebKit\//.test(ua)) browser.engine = 'WebKit';
+      else if (/Trident\//.test(ua)) browser.engine = 'Trident';
 
-      // Check Brave async (it exposes a promise)
-      if (info.browser === 'Chrome' && navigator.brave && typeof navigator.brave.isBrave === 'function') {
-        navigator.brave.isBrave().then(isBrave => {
-          if (isBrave) {
-            info.browser = 'Brave';
-            render(info);
-          }
-        });
-      }
-
-      // Engine
-      if (/Gecko\//.test(ua)) info.engine = 'Gecko';
-      else if (/AppleWebKit\//.test(ua)) info.engine = 'WebKit';
-      else if (/Trident\//.test(ua)) info.engine = 'Trident';
-
-      // OS
+      // --- OS ---
+      let os = { name: 'Unknown', version: '' };
       const osPatterns = [
-        ['Windows', /Windows NT (\d+\.\d+)/],
+        ['Windows', /Windows NT ([\d.]+)/],
         ['macOS',   /Mac OS X ([\d_]+)/],
         ['iOS',     /iPhone OS ([\d_]+)/],
+        ['iPadOS',  /iPad.*OS ([\d_]+)/],
         ['Android', /Android ([\d.]+)/],
+        ['Chrome OS', /CrOS/],
         ['Linux',   /Linux/],
       ];
       for (const [name, re] of osPatterns) {
         const m = ua.match(re);
         if (m) {
-          info.os = m[1] ? name + ' ' + m[1].replace(/_/g, '.') : name;
+          os.name = name;
+          os.version = m[1] ? m[1].replace(/_/g, '.') : '';
           break;
         }
       }
+
+      // --- Screen ---
+      const s = window.screen;
+      const screen = {
+        width: s.width,
+        height: s.height,
+        availWidth: s.availWidth,
+        availHeight: s.availHeight,
+        colorDepth: s.colorDepth,
+        pixelRatio: window.devicePixelRatio || 1,
+        orientation: (s.orientation && s.orientation.type) || ''
+      };
+
+      // --- Window ---
+      const win = {
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+        outerWidth: window.outerWidth,
+        outerHeight: window.outerHeight
+      };
+
+      // --- Locale & Timezone ---
+      const now = new Date();
+      const locale = {
+        language: navigator.language || '',
+        languages: navigator.languages ? Array.from(navigator.languages) : [],
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+        timezoneOffset: now.getTimezoneOffset(),
+        dateFormat: new Intl.DateTimeFormat(navigator.language, { dateStyle: 'full' }).format(now),
+        numberFormat: new Intl.NumberFormat(navigator.language).format(1234567.89),
+        currency: (() => {
+          try {
+            return new Intl.NumberFormat(navigator.language, { style: 'currency', currency: 'USD' }).format(1234.5);
+          } catch { return ''; }
+        })()
+      };
+
+      // --- Hardware ---
+      const hardware = {
+        cores: navigator.hardwareConcurrency || null,
+        memory: navigator.deviceMemory || null,
+        maxTouchPoints: navigator.maxTouchPoints || 0,
+        platform: navigator.platform || '',
+        mobile: /Mobi|Android/i.test(ua)
+      };
+
+      // --- Network ---
+      const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      const network = conn ? {
+        effectiveType: conn.effectiveType || '',
+        downlink: conn.downlink || null,
+        rtt: conn.rtt || null,
+        saveData: conn.saveData || false
+      } : null;
+
+      // --- Media ---
+      const media = {
+        cookiesEnabled: navigator.cookieEnabled,
+        doNotTrack: navigator.doNotTrack || null,
+        pdfViewerEnabled: navigator.pdfViewerEnabled || null,
+        webdriver: navigator.webdriver || false,
+        online: navigator.onLine
+      };
+
+      // --- Features ---
+      const features = {
+        serviceWorker: 'serviceWorker' in navigator,
+        webGL: (() => {
+          try {
+            const c = document.createElement('canvas');
+            return !!(c.getContext('webgl') || c.getContext('experimental-webgl'));
+          } catch { return false; }
+        })(),
+        webGL2: (() => {
+          try { return !!document.createElement('canvas').getContext('webgl2'); }
+          catch { return false; }
+        })(),
+        webRTC: !!(window.RTCPeerConnection || window.webkitRTCPeerConnection),
+        webSocket: 'WebSocket' in window,
+        webWorker: 'Worker' in window,
+        sharedWorker: 'SharedWorker' in window,
+        notifications: 'Notification' in window,
+        geolocation: 'geolocation' in navigator,
+        bluetooth: 'bluetooth' in navigator,
+        usb: 'usb' in navigator,
+        midi: 'requestMIDIAccess' in navigator,
+        clipboard: 'clipboard' in navigator,
+        share: 'share' in navigator,
+        vibrate: 'vibrate' in navigator,
+        speechSynthesis: 'speechSynthesis' in window,
+        speechRecognition: 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window,
+        indexedDB: 'indexedDB' in window,
+        localStorage: (() => { try { return !!window.localStorage; } catch { return false; } })(),
+        sessionStorage: (() => { try { return !!window.sessionStorage; } catch { return false; } })(),
+        intersectionObserver: 'IntersectionObserver' in window,
+        resizeObserver: 'ResizeObserver' in window,
+        mutationObserver: 'MutationObserver' in window,
+        performanceObserver: 'PerformanceObserver' in window,
+        webAnimations: 'animate' in document.createElement('div'),
+        customElements: 'customElements' in window,
+        shadowDOM: 'attachShadow' in document.createElement('div'),
+        webComponents: 'customElements' in window && 'attachShadow' in document.createElement('div'),
+        offscreenCanvas: 'OffscreenCanvas' in window,
+        webCodecs: 'VideoEncoder' in window,
+        webTransport: 'WebTransport' in window,
+        webGPU: 'gpu' in navigator
+      };
+
+      // --- GPU ---
+      let gpu = null;
+      try {
+        const c = document.createElement('canvas');
+        const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+        if (gl) {
+          const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+          gpu = {
+            vendor: dbg ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR),
+            renderer: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)
+          };
+        }
+      } catch {}
+
+      // --- Battery (async) ---
+      if (navigator.getBattery) {
+        navigator.getBattery().then(b => {
+          info.battery = {
+            charging: b.charging,
+            level: Math.round(b.level * 100) + '%',
+            chargingTime: b.chargingTime === Infinity ? 'N/A' : b.chargingTime + 's',
+            dischargingTime: b.dischargingTime === Infinity ? 'N/A' : b.dischargingTime + 's'
+          };
+          render(info);
+        }).catch(() => {});
+      }
+
+      // --- Brave (async) ---
+      if (browser.name === 'Chrome' && navigator.brave && typeof navigator.brave.isBrave === 'function') {
+        navigator.brave.isBrave().then(isBrave => {
+          if (isBrave) { info.browser.name = 'Brave'; render(info); }
+        });
+      }
+
+      const info = {
+        browser,
+        os,
+        screen,
+        window: win,
+        locale,
+        hardware,
+        network,
+        gpu,
+        media,
+        features,
+        userAgent: ua
+      };
 
       return info;
     }
 
     function render(info) {
-      document.getElementById('browserName').textContent = info.browser + (info.version ? ' ' + info.version : '');
+      const name = info.browser.name + (info.browser.version ? ' ' + info.browser.version : '');
+      document.getElementById('browserName').textContent = name;
 
       const json = JSON.stringify(info, null, 2);
       const highlighted = json
-        .replace(/"(\w+)":/g, '<span class="key">"$1"</span>:')
-        .replace(/: "(.*?)"/g, ': <span class="string">"$1"</span>')
-        .replace(/: (true|false)/g, ': <span class="bool">$1</span>');
+        .replace(/"([^"]+)":/g, '<span class="key">"$1"</span>:')
+        .replace(/: "((?:[^"\\]|\\.)*)"/g, ': <span class="string">"$1"</span>')
+        .replace(/: (true|false)/g, ': <span class="bool">$1</span>')
+        .replace(/: (null)/g, ': <span class="null">$1</span>')
+        .replace(/: (\d+\.?\d*)/g, ': <span class="num">$1</span>');
       document.getElementById('json').innerHTML = highlighted;
     }
 
