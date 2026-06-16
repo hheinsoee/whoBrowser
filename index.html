@@ -95,6 +95,7 @@
     <a class="open-browser-btn" id="openBrowserBtn">Open in Browser</a>
     <button class="copy-url-btn" id="copyUrlBtn">Copy URL</button>
   </div>
+  <button class="copy-url-btn" id="copyJsonBtn" style="margin-bottom: 12px;">Copy JSON</button>
   <pre id="json"></pre>
   <script>
     function detect() {
@@ -404,6 +405,15 @@
         .replace(/: (null)/g, ': <span class="null">$1</span>')
         .replace(/: (\d+\.?\d*)/g, ': <span class="num">$1</span>');
       document.getElementById('json').innerHTML = highlighted;
+
+      document.getElementById('copyJsonBtn').onclick = function() {
+        navigator.clipboard.writeText(json).then(function() {
+          document.getElementById('copyJsonBtn').textContent = 'Copied!';
+          setTimeout(function() {
+            document.getElementById('copyJsonBtn').textContent = 'Copy JSON';
+          }, 2000);
+        });
+      };
     }
 
     render(detect());
