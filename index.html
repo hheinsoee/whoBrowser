@@ -59,13 +59,28 @@
       // --- Browser ---
       const browser = { name: 'Unknown', version: '', engine: '' };
       const browsers = [
-        ['Opera',    /OPR\/(\d+[\d.]*)/],
-        ['Edge',     /Edg\/(\d+[\d.]*)/],
-        ['Samsung',  /SamsungBrowser\/(\d+[\d.]*)/],
-        ['Vivaldi',  /Vivaldi\/(\d+[\d.]*)/],
-        ['Firefox',  /Firefox\/(\d+[\d.]*)/],
-        ['Safari',   /Version\/(\d+[\d.]*).*Safari/],
-        ['Chrome',   /Chrome\/(\d+[\d.]*)/],
+        // In-app browsers (check first — they also contain Chrome/Safari in UA)
+        ['LINE',        /\bLine\/(\d+[\d.]*)/i],
+        ['Facebook',    /\bFB[\w]*\/(\d+[\d.]*)|FBAN/i],
+        ['Instagram',   /\bInstagram[\s/](\d+[\d.]*)/i],
+        ['Twitter',     /\bTwitter[\s/](\d+[\d.]*)/i],
+        ['TikTok',      /\bBytedance|ByteLocale|musical_ly|TikTok[\s/](\d+[\d.]*)/i],
+        ['Telegram',    /\bTelegramBot|Telegram[\s/](\d+[\d.]*)/i],
+        ['WeChat',      /\bMicroMessenger\/(\d+[\d.]*)/i],
+        ['KakaoTalk',   /\bKAKAOTALK[\s/](\d+[\d.]*)/i],
+        ['Snapchat',    /\bSnapchat[\s/](\d+[\d.]*)/i],
+        ['Discord',     /\bDiscord[\s/](\d+[\d.]*)/i],
+        ['Slack',       /\bSlack[\s/](\d+[\d.]*)/i],
+        ['Pinterest',   /\bPinterest[\s/](\d+[\d.]*)/i],
+        ['LinkedIn',    /\bLinkedIn[\s/](\d+[\d.]*)/i],
+        // Standalone browsers
+        ['Opera',       /OPR\/(\d+[\d.]*)/],
+        ['Edge',        /Edg\/(\d+[\d.]*)/],
+        ['Samsung',     /SamsungBrowser\/(\d+[\d.]*)/],
+        ['Vivaldi',     /Vivaldi\/(\d+[\d.]*)/],
+        ['Firefox',     /Firefox\/(\d+[\d.]*)/],
+        ['Safari',      /Version\/(\d+[\d.]*).*Safari/],
+        ['Chrome',      /Chrome\/(\d+[\d.]*)/],
       ];
       for (const [name, re] of browsers) {
         const m = ua.match(re);
