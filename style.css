@@ -75,22 +75,6 @@ pre {
   border: 1px solid #333;
   cursor: pointer;
 }
-nav {
-  margin-bottom: 24px;
-}
-nav a {
-  color: #666;
-  font-size: 13px;
-  text-decoration: none;
-  margin-right: 16px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid transparent;
-}
-nav a.active {
-  color: #fff;
-  border-bottom-color: #fff;
-}
-nav a:hover { color: #aaa; }
 .bar {
   display: flex;
   justify-content: space-between;
