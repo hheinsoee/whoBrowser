@@ -45,12 +45,55 @@
       color: #7dd3fc;
       margin-bottom: 24px;
     }
+    .inapp-warning {
+      display: none;
+      background: #1a1a00;
+      border: 1px solid #fbbf24;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+    .inapp-warning.show { display: block; }
+    .inapp-warning p {
+      color: #fbbf24;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+    .inapp-warning .app-name { color: #fff; font-weight: 700; }
+    .open-browser-btn {
+      display: inline-block;
+      background: #fff;
+      color: #000;
+      font-family: monospace;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 12px 24px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .open-browser-btn:active { background: #ccc; }
+    .copy-url-btn {
+      display: inline-block;
+      background: none;
+      color: #888;
+      font-family: monospace;
+      font-size: 13px;
+      padding: 12px 16px;
+      border: 1px solid #333;
+      cursor: pointer;
+      margin-left: 8px;
+    }
   </style>
 </head>
 <body>
   <h1>Detected Browser</h1>
   <div class="browser-name" id="browserName">Detecting...</div>
   <h2 id="fingerprint"></h2>
+  <div class="inapp-warning" id="inappWarning">
+    <p>You are in <span class="app-name" id="appName"></span>'s in-app browser. Google Sign-In may not work here.</p>
+    <a class="open-browser-btn" id="openBrowserBtn">Open in Browser</a>
+    <button class="copy-url-btn" id="copyUrlBtn">Copy URL</button>
+  </div>
   <pre id="json"></pre>
   <script>
     function detect() {
@@ -320,10 +363,63 @@
       return info;
     }
 
+    const IN_APP_BROWSERS = [
+      'LINE', 'Facebook', 'Instagram', 'Twitter', 'TikTok', 'Telegram',
+      'WeChat', 'KakaoTalk', 'Snapchat', 'Discord', 'Slack', 'Pinterest',
+      'LinkedIn', 'WhatsApp', 'Zalo', 'Viber', 'Naver', 'Daum', 'Reddit',
+      'Threads', 'Messenger', 'Google App', 'Google News', 'YouTube',
+      'Shopee', 'Lazada', 'Grab', 'PayPay', 'Alipay', 'QQ', 'Weibo',
+      'Douyin', 'Baidu', 'WebView'
+    ];
+
+    function openInBrowser(url) {
+      // Try intent:// for Android (opens default browser)
+      const android = /Android/i.test(navigator.userAgent);
+      const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      if (android) {
+        window.location.href = 'intent://' + url.replace(/^https?:\/\//, '') +
+          '#Intent;scheme=https;action=android.intent.action.VIEW;end';
+        return;
+      }
+
+      // iOS: try x-safari:// or window.open
+      if (ios) {
+        window.location.href = 'x-safari-https://' + url.replace(/^https?:\/\//, '');
+        setTimeout(function() {
+          window.open(url, '_blank');
+        }, 500);
+        return;
+      }
+
+      window.open(url, '_blank');
+    }
+
     function render(info) {
       const name = info.browser.name + (info.browser.version ? ' ' + info.browser.version : '');
       document.getElementById('browserName').textContent = name;
       document.getElementById('fingerprint').textContent = info.browser.name;
+
+      // Show warning if in-app browser
+      const isInApp = IN_APP_BROWSERS.includes(info.browser.name);
+      if (isInApp) {
+        document.getElementById('inappWarning').classList.add('show');
+        document.getElementById('appName').textContent = info.browser.name;
+
+        document.getElementById('openBrowserBtn').addEventListener('click', function(e) {
+          e.preventDefault();
+          openInBrowser(window.location.href);
+        });
+
+        document.getElementById('copyUrlBtn').addEventListener('click', function() {
+          navigator.clipboard.writeText(window.location.href).then(function() {
+            document.getElementById('copyUrlBtn').textContent = 'Copied!';
+            setTimeout(function() {
+              document.getElementById('copyUrlBtn').textContent = 'Copy URL';
+            }, 2000);
+          });
+        });
+      }
 
       const json = JSON.stringify(info, null, 2);
       const highlighted = json
